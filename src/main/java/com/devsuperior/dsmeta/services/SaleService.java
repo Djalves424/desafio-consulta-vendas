@@ -31,9 +31,38 @@ public class SaleService {
         return new SaleMinDTO(entity);
     }
 
-    public Page<SaleMinDTO> findAll(@PathVariable Pageable pageable) {
-        Page<Sale> result = repository.findAll(pageable);
-        return result.map(x -> new SaleMinDTO(x));
+    public Page<SaleMinDTO> findAll(String minDate, String maxDate, String name, Pageable pageable) {
+
+        try {
+            LocalDate startDate = null;
+            LocalDate endDate = null;
+
+            if (minDate != null) {
+                startDate = LocalDate.parse(minDate);
+                minDate = startDate.toString();
+            } else {
+                startDate = LocalDate.ofInstant(Instant.now(), ZoneId.systemDefault()).minusYears(1L);
+                minDate = startDate.toString();
+            }
+
+            if (maxDate != null) {
+                endDate = LocalDate.parse(maxDate);
+                maxDate = endDate.toString();
+            } else {
+                endDate = LocalDate.ofInstant(Instant.now(), ZoneId.systemDefault());
+                maxDate = endDate.toString();
+            }
+
+            Page<Sale> result = repository.findAll(LocalDate.parse(minDate),
+                    LocalDate.parse(maxDate), name,
+                    pageable);
+            Page<SaleMinDTO> dto = result.map(x -> new SaleMinDTO(x));
+
+            return dto;
+
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("Data informada é invalida");
+        }
     }
 
     public List<SummaryDTO> summaryFindAll(String minDate, String maxDate) {
